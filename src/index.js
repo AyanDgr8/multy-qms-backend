@@ -1,10 +1,8 @@
 // src/index.js
 
-
 import express from "express";
 import cors from "cors";
-import mysql from "mysql";
-import path from "path";
+import mysql from "mysql2";
 import dotenv from "dotenv";
 
 dotenv.config({
@@ -20,10 +18,10 @@ app.use(express.static('public')); // For serving static files like CSS
 
 // Create a connection to the MySQL database
 const db = mysql.createConnection({
-    host: process.env.HOST,
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE
+    host: "localhost",
+    user: "root",
+    password: "Ayan@1012",
+    database: "mycode"
 });
 
 // Connect to the database
@@ -51,18 +49,34 @@ app.get('/api/transcriptions', (req, res) => {
     });
 });
 
-// Route to handle updating comments
-app.post('/api/update-comment', (req, res) => {
-    const { transcription_id, comment } = req.body;
+// Route to search transcriptions by spoken words
+app.get('/api/search-transcriptions', (req, res) => {
+    const { query } = req.query;
+    const sql = 'SELECT * FROM transcriptions WHERE customer_transcription LIKE ?';
+    const searchQuery = `%${query}%`;
 
-    const sql = 'UPDATE transcriptions SET comment = ? WHERE id = ?';
-    db.query(sql, [comment, transcription_id], (err, result) => {
+    db.query(sql, [searchQuery], (err, results) => {
         if (err) {
-            return res.status(500).send('Error updating comment: ' + err);
+            return res.status(500).send(err);
         }
-        res.send('Comment updated successfully');
+        res.json(results);
     });
 });
+
+
+
+// // Route to handle updating comments
+// app.post('/api/update-comment', (req, res) => {
+//     const { transcription_id, comment } = req.body;
+
+//     const sql = 'UPDATE transcriptions SET comment = ? WHERE id = ?';
+//     db.query(sql, [comment, transcription_id], (err, result) => {
+//         if (err) {
+//             return res.status(500).send('Error updating comment: ' + err);
+//         }
+//         res.send('Comment updated successfully');
+//     });
+// });
 
 app.listen(process.env.PORT, () => {
     console.log(`⚙️  Server is running at port: ${process.env.PORT}`);
